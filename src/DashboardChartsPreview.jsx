@@ -58,6 +58,17 @@ const kpis = [
 ];
 const COLORS = ['#4F46E5','#06B6D4','#F97316','#10B981','#F43F5E'];
 
+function useThemeColors(){
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  const isDark = bg === '#07122a';
+  return {
+    isDark,
+    gridStroke: isDark ? "#183045" : "#e2e8f0",
+    axisStroke: isDark ? "#9fb1c8" : "#64748b",
+    brushStroke: isDark ? "#274155" : "#cbd5e1",
+  };
+}
+
 function Panel({title, children, style={}}){
   return (
     <div style={{background:'var(--panel)', borderRadius:10, padding:12, color:'var(--text)', boxSizing:'border-box', ...style}}>
@@ -81,9 +92,9 @@ function MiniSpark({points=[], color='#4F46E5', height=36}){
 function GlobalTooltip({active, payload, label}){
   if(!active || !payload || payload.length===0) return null;
   return (
-    <div style={{background:'#071226', color:'#fff', padding:8, borderRadius:6, fontSize:12}}>
-      <div style={{color:'#94a3b8', marginBottom:6}}>{label}</div>
-      {payload.map((p,i)=>(<div key={i} style={{display:'flex', justifyContent:'space-between'}}><div style={{color:p.color||'#fff'}}>{p.name||p.dataKey}</div><div style={{fontWeight:700}}>{p.value}</div></div>))}
+    <div style={{background:'var(--panel)', color:'var(--text)', padding:8, borderRadius:6, fontSize:12}}>
+      <div style={{color:'var(--muted)', marginBottom:6}}>{label}</div>
+      {payload.map((p,i)=>(<div key={i} style={{display:'flex', justifyContent:'space-between'}}><div style={{color:p.color||'var(--text)'}}>{p.name||p.dataKey}</div><div style={{fontWeight:700}}>{p.value}</div></div>))}
     </div>
   )
 }
@@ -103,15 +114,15 @@ function GeoMapMock({onSelect}){
         {regions.map(r=>(
           <g key={r.id} onMouseEnter={()=>setHover(r)} onMouseLeave={()=>setHover(null)} onClick={()=>{setSel(r); onSelect&&onSelect(r)}} style={{cursor:'pointer'}}>
             <path d={r.path} fill={r.color} stroke="#001122" strokeWidth={2} opacity={sel && sel.id===r.id?1:0.9} />
-            <text x={parseInt(r.path.split(' ')[1])||20} y={parseInt(r.path.split(' ')[2])||30} fill="#001" fontSize="11">{r.name}</text>
+            <text x={parseInt(r.path.split(' ')[1])||20} y={parseInt(r.path.split(' ')[2])||30} fill="var(--text)" fontSize="11">{r.name}</text>
           </g>
         ))}
       </svg>
       <div style={{minWidth:200}}>
         <div style={{fontWeight:700, marginBottom:6}}>Region Info</div>
-        {hover ? (<div><div>{hover.name}</div><div style={{color:'#94a3b8'}}>Metric: {hover.metric}</div></div>)
-        : sel ? (<div><div>{sel.name} (selected)</div><div style={{color:'#94a3b8'}}>Metric: {sel.metric}</div></div>)
-        : <div style={{color:'#94a3b8'}}>Hover or click a region</div>}
+        {hover ? (<div><div>{hover.name}</div><div style={{color:'var(--muted)'}}>Metric: {hover.metric}</div></div>)
+        : sel ? (<div><div>{sel.name} (selected)</div><div style={{color:'var(--muted)'}}>Metric: {sel.metric}</div></div>)
+        : <div style={{color:'var(--muted)'}}>Hover or click a region</div>}
       </div>
     </div>
   )
@@ -132,7 +143,7 @@ function RadialStack({layers=[{label:'A',value:72},{label:'B',value:46},{label:'
           const ex=r*Math.cos(endRad); const ey=r*Math.sin(endRad);
           const large=end>180?1:0;
           const d=`M ${sx} ${sy} A ${r} ${r} 0 ${large} 1 ${ex} ${ey}`;
-          return (<g key={i}><path d={`M ${-r} 0 A ${r} ${r} 0 1 1 ${r} 0`} stroke="#0e1b2b" strokeWidth={10} fill="none" opacity={0.3} /><path d={d} stroke={palette[i%palette.length]} strokeWidth={10} fill="none" strokeLinecap="round" /><text x={r+8} y={-i*(spacing+2)} fontSize={10} fill="#cbd5e1">{l.label}</text></g>)
+          return (<g key={i}><path d={`M ${-r} 0 A ${r} ${r} 0 1 1 ${r} 0`} stroke="var(--panel)" strokeWidth={10} fill="none" opacity={0.3} /><path d={d} stroke={palette[i%palette.length]} strokeWidth={10} fill="none" strokeLinecap="round" /><text x={r+8} y={-i*(spacing+2)} fontSize={10} fill="var(--text)">{l.label}</text></g>)
         })}
       </g>
     </svg>
@@ -141,20 +152,21 @@ function RadialStack({layers=[{label:'A',value:72},{label:'B',value:46},{label:'
 
 /* Widgets */
 function LineSimple({dots=true, smooth=true, multi=false, threshold=null}){
+  const {gridStroke, axisStroke, brushStroke} = useThemeColors();
   return (
     <Panel title="Line — Simple / Variants" style={{height:420}}>
       <div style={{width:'100%', height:360}}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={timeData} margin={{top:8, right:24, bottom:8}}>
-            <CartesianGrid stroke="#183045" strokeDasharray="3 3" />
-            <XAxis dataKey="name" stroke="#9fb1c8" />
-            <YAxis stroke="#9fb1c8" />
+            <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
+            <XAxis dataKey="name" stroke={axisStroke} />
+            <YAxis stroke={axisStroke} />
             <ReTooltip content={<GlobalTooltip />} />
             <Legend />
             <Line type={smooth?"monotone":"linear"} dataKey="value" stroke={COLORS[0]} dot={dots?{r:3}:false} strokeWidth={2} name="Series A" />
             {multi && <Line type={smooth?"monotone":"linear"} dataKey="value2" stroke={COLORS[1]} dot={dots?{r:3}:false} strokeWidth={2} name="Series B" />}
             {threshold !== null && <ReferenceLine y={threshold} stroke="#ef4444" strokeDasharray="4 4" label={{value:`Threshold ${threshold}`, fill:'#ef4444'}} />}
-            <Brush dataKey="name" height={20} stroke="#274155" />
+            <Brush dataKey="name" height={20} stroke={brushStroke} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -216,14 +228,15 @@ function PieSpeedometer({value=72}){
 }
 
 function AreaSimple({stacked=false, smooth=true}){
+  const {gridStroke, axisStroke} = useThemeColors();
   return (
     <Panel title="Area — Simple / Stacked / Linear" style={{height:420}}>
       <div style={{height:360}}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={timeData}>
-            <CartesianGrid stroke="#183045" strokeDasharray="3 3" />
-            <XAxis dataKey="name" stroke="#9fb1c8" />
-            <YAxis stroke="#9fb1c8" />
+            <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
+            <XAxis dataKey="name" stroke={axisStroke} />
+            <YAxis stroke={axisStroke} />
             <ReTooltip content={<GlobalTooltip />} />
             <Area type={smooth?"monotone":"linear"} dataKey="value" stackId={stacked?'a':undefined} stroke={COLORS[0]} fill={COLORS[0]} fillOpacity={0.16} />
             {stacked && <Area type={smooth?"monotone":"linear"} dataKey="value2" stackId="a" stroke={COLORS[1]} fill={COLORS[1]} fillOpacity={0.16} />}
@@ -235,6 +248,7 @@ function AreaSimple({stacked=false, smooth=true}){
 }
 
 function BarSimple({orientation='vertical', multiple=false, barInBar=false, stacked=false, posneg=false}){
+  const {gridStroke, axisStroke} = useThemeColors();
   const isHorizontal = orientation === 'horizontal';
   const data = posneg ? timeData.map(d=>({...d, value: d.value-240})) : timeData;
   return (
@@ -242,9 +256,9 @@ function BarSimple({orientation='vertical', multiple=false, barInBar=false, stac
       <div style={{height:360}}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} layout={isHorizontal ? 'vertical' : 'horizontal'}>
-            <CartesianGrid stroke="#183045" strokeDasharray="3 3" />
-            <XAxis type={isHorizontal ? 'number' : 'category'} dataKey={isHorizontal?undefined:'name'} stroke="#9fb1c8" />
-            <YAxis type={isHorizontal ? 'category' : 'number'} dataKey={isHorizontal?'name':undefined} stroke="#9fb1c8" />
+            <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
+            <XAxis type={isHorizontal ? 'number' : 'category'} dataKey={isHorizontal?undefined:'name'} stroke={axisStroke} />
+            <YAxis type={isHorizontal ? 'category' : 'number'} dataKey={isHorizontal?'name':undefined} stroke={axisStroke} />
             <ReTooltip content={<GlobalTooltip />} />
             <Legend />
             {!barInBar && <Bar dataKey="value" fill={COLORS[0]} stackId={stacked?'grp':undefined} />}
@@ -284,8 +298,8 @@ function TrendingWidget({short=[2,4,6,3,5]}){
   return (
     <Panel title="Trending — Simple" style={{height:200}}>
       <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-        <div><div style={{fontSize:22, fontWeight:800}}>{short[short.length-1]}</div><div style={{color:'#94a3b8'}}>Short term</div></div>
-        <div style={{textAlign:'right'}}><div style={{color: dir==='up'? '#10B981': dir==='down'?'#EF4444':'#94a3b8'}}>{dir==='up'?'▲': dir==='down'?'▼':'—'} {Math.abs(delta)}</div><MiniSpark points={short} color={COLORS[0]} /></div>
+        <div><div style={{fontSize:22, fontWeight:800}}>{short[short.length-1]}</div><div style={{color:'var(--muted)'}}>Short term</div></div>
+        <div style={{textAlign:'right'}}><div style={{color: dir==='up'? '#10B981': dir==='down'?'#EF4444':'var(--muted)'}}>{dir==='up'?'▲': dir==='down'?'▼':'—'} {Math.abs(delta)}</div><MiniSpark points={short} color={COLORS[0]} /></div>
       </div>
     </Panel>
   )
@@ -296,8 +310,8 @@ function KPIGrid(){
     <Panel title="Cards / KPIs" style={{height:320}}>
       <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10}}>
         {kpis.map((k,i)=>(
-          <div key={k.title} style={{background:'#071126', padding:12, borderRadius:8}}>
-            <div style={{fontSize:12, color:'#94a3b8'}}>{k.title}</div>
+          <div key={k.title} style={{background:'rgba(255,255,255,0.03)', padding:12, borderRadius:8}}>
+            <div style={{fontSize:12, color:'var(--muted)'}}>{k.title}</div>
             <div style={{fontSize:20, fontWeight:800}}>{k.value}</div>
             <div style={{display:'flex', justifyContent:'space-between', marginTop:8}}>
               <div style={{color: k.change>=0? '#10B981':'#EF4444'}}>{k.change}%</div>
@@ -311,17 +325,18 @@ function KPIGrid(){
 }
 
 function TooltipDemo(){
+  const {gridStroke, axisStroke} = useThemeColors();
   return (
     <Panel title="Tooltip — Global / Contextual" style={{height:320}}>
       <div style={{display:'flex', gap:12}}>
         <div style={{flex:1}}>
-          <div style={{marginBottom:6, color:'#9fb1c8'}}>Global tooltip on Line</div>
+          <div style={{marginBottom:6, color:'var(--muted)'}}>Global tooltip on Line</div>
           <div style={{height:220}}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={timeData}>
-                <CartesianGrid stroke="#183045" strokeDasharray="3 3" />
-                <XAxis dataKey="name" stroke="#9fb1c8" />
-                <YAxis stroke="#9fb1c8" />
+                <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" />
+                <XAxis dataKey="name" stroke={axisStroke} />
+                <YAxis stroke={axisStroke} />
                 <ReTooltip content={<GlobalTooltip />} />
                 <Line type="monotone" dataKey="value" stroke={COLORS[0]} dot={{r:3}} />
                 <Line type="monotone" dataKey="value2" stroke={COLORS[1]} dot={false} />
@@ -330,10 +345,10 @@ function TooltipDemo(){
           </div>
         </div>
         <div style={{width:260}}>
-          <div style={{marginBottom:6, color:'#9fb1c8'}}>Contextual tooltip</div>
-          <div style={{background:'#071226', padding:10, borderRadius:8}}>
-            <div style={{color:'#cbd5e1'}}>Hovering elements shows a custom styled tooltip.</div>
-            <div style={{marginTop:8, color:'#94a3b8'}}>This box showcases the same design language for tooltips.</div>
+          <div style={{marginBottom:6, color:'var(--muted)'}}>Contextual tooltip</div>
+          <div style={{background:'var(--panel)', padding:10, borderRadius:8}}>
+            <div style={{color:'var(--text)'}}>Hovering elements shows a custom styled tooltip.</div>
+            <div style={{marginTop:8, color:'var(--muted)'}}>This box showcases the same design language for tooltips.</div>
           </div>
         </div>
       </div>
@@ -485,9 +500,9 @@ export default function DashboardChartsPreview(){
       <aside style={{width:360, borderLeft:'1px solid rgba(255,255,255,0.03)', padding:16, overflowY:'auto'}}>
         <div style={{fontWeight:800, marginBottom:8}}>Inspector</div>
         <div style={{color:'var(--muted)', marginBottom:12}}>Use the left navigation to pick a chart variant. Inspector shows contextual info.</div>
-        <div style={{background:'#071126', padding:12, borderRadius:8}}>
+        <div style={{background:'rgba(255,255,255,0.03)', padding:12, borderRadius:8}}>
           <div style={{fontWeight:700, marginBottom:6}}>Variant</div>
-          <div style={{color:'#cbd5e1', marginBottom:6}}>{selected}</div>
+          <div style={{color:'var(--text)', marginBottom:6}}>{selected}</div>
           <div style={{fontSize:13, color:'var(--muted)'}}>This inspector is a placeholder — add controls (toggles, sliders, keys) that update the preview immediately.</div>
         </div>
       </aside>

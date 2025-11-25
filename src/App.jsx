@@ -23,7 +23,7 @@ export default function App(){
       <header style={{padding:12, display:'flex', justifyContent:'space-between', alignItems:'center', background: 'linear-gradient(90deg, rgba(255,255,255,0.02), transparent)'}}>
         <div style={{fontWeight:800}}>Design System — Charts Preview</div>
         <div>
-          <button onClick={() => setTheme(prev => prev==='dark'?'light':'dark')} style={{padding:'8px 12px', borderRadius:8, border:'none', cursor:'pointer'}}>
+          <button onClick={() => setTheme(prev => prev==='dark'?'light':'dark')} style={{padding:'8px 12px', borderRadius:8, border:'1px solid var(--muted)', cursor:'pointer', background: 'var(--panel)', color: 'var(--text)'}}>
             Toggle {theme==='dark'?'Light':'Dark'}
           </button>
         </div>
