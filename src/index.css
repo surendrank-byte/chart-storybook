@@ -1,0 +1,10 @@
+:root{
+  --bg:#07122a;
+  --panel:#061226;
+  --muted:#94a3b8;
+  --text:#e6eef8;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:var(--bg); color:var(--text)}
+#root{height:100vh}
+button{font-family:inherit}
